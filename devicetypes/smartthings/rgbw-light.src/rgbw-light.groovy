@@ -131,9 +131,7 @@ private getWHITE_NAMES() { [WARM_WHITE, COLD_WHITE] }
 private getCOLOR_NAMES() { RGB_NAMES + WHITE_NAMES }
 private getSWITCH_VALUE_ON() { 0xFF } // Per Z-Wave, this multilevel switch value commands state-transition to on.  This will restore the most-recent non-zero value cached in the device.
 private getSWITCH_VALUE_OFF() { 0 } // Per Z-Wave, this multilevel switch value commands state-transition to off.  This will not clobber the most-recent non-zero value cached in the device.
-private MIN(a, b) { a < b ? a : b }
-private MAX(a, b) { a > b ? a : b }
-private BOUND(x, floor, ceiling) { x < floor ? floor : x > ceiling ? ceiling : x }
+private BOUND(x, floor, ceiling) { Math.max(Math.min(level, ceiling), floor) }
 
 def updated() {
 	log.debug "updated().."
@@ -243,7 +241,7 @@ def off() {
 }
 
 def setLevel(level, duration=1) {
-	level = Math.max(Math.min(level, 99), 1) // See Z-Wave level encoding
+	level = BOUND(level, 1, 99) // See Z-Wave level encoding
 	emitMultiLevelSet(level, duration)
 }
 
@@ -314,13 +312,13 @@ private emitTemperatureSet(temp, cmds) {
 private tempToZwaveWarmWhite(temp) {
 	temp = BOUND(temp, COLOR_TEMP_MIN, COLOR_TEMP_MAX)
 	def warmValue = ((COLOR_TEMP_MAX - temp) / COLOR_TEMP_DIFF * WHITE_MAX) as Integer
-	warmValue = MAX(WHITE_MIN, warmValue)
+	warmValue = Math.max(WHITE_MIN, warmValue)
 	warmValue
 }
 
 private tempToZwaveColdWhite(temp) {
 	def coldValue = (WHITE_MAX - tempToZwaveWarmWhite(temp))
-	coldValue = MAX(WHITE_MIN, coldValue)
+	coldValue = Math.max(WHITE_MIN, coldValue)
 	coldValue
 }
 
